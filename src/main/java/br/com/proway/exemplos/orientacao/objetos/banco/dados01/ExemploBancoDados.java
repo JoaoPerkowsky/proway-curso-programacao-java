@@ -44,7 +44,7 @@ public class ExemploBancoDados {
                 "Codigo: " + id + 
                         " - Modelo: " + modelo +
                         " - Marca: " + marca +
-                        " - Preço: " + preco);
+                        " - Preço: " + preco + "\n");
             }
             
         } catch (Exception ex){
