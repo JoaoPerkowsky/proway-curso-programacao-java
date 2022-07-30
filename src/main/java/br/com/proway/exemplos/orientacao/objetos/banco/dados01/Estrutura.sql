@@ -15,3 +15,11 @@ Select modelo from carros;
 
 INSERT INTO carros(modelo, marca, preco) VAlues
 ('Fusca 72', 'VW', 15000);
+
+CREATE TABLE jogos(
+	id INT primary key auto_increment,
+    nome varchar(150),
+    tipo varchar(30)
+);
+
+select * FROM jogos;
