@@ -10,13 +10,15 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-
+ 
 /**
  *
  * @author 72072
  */
 public class JogoJFrame extends javax.swing.JFrame {
 
+    private int codigoEditar = -1;
+    
     /**
      * Creates new form JogoJFrame
      */
@@ -74,14 +76,25 @@ public class JogoJFrame extends javax.swing.JFrame {
         }
 
         jButtonEditar.setText("Editar");
+        jButtonEditar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonEditarActionPerformed(evt);
+            }
+        });
 
         jButtonApagar.setText("Apagar");
+        jButtonApagar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonApagarActionPerformed(evt);
+            }
+        });
 
         jLabelNome.setText("Nome");
 
         jLabelTipo.setText("Tipo");
 
         jComboBoxTipo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "FPS", "RPG", "Estrategia", "Esportes" }));
+        jComboBoxTipo.setSelectedIndex(-1);
 
         jButtonSalvar.setText("Salvar");
         jButtonSalvar.addActionListener(new java.awt.event.ActionListener() {
@@ -125,7 +138,7 @@ public class JogoJFrame extends javax.swing.JFrame {
                     .addComponent(jButtonApagar)
                     .addComponent(jLabelNome))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jTextFieldNome, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
@@ -134,8 +147,8 @@ public class JogoJFrame extends javax.swing.JFrame {
                         .addComponent(jComboBoxTipo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButtonSalvar))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                .addContainerGap(104, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 175, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(29, Short.MAX_VALUE))
         );
 
         pack();
@@ -150,14 +163,96 @@ public class JogoJFrame extends javax.swing.JFrame {
             String nome = jTextFieldNome.getText();
             String tipo = jComboBoxTipo.getSelectedItem().toString();
 
+            if(codigoEditar == -1){
             executor.execute("INSERT INTO jogos (nome, tipo) VALUES ('" + nome + "', '" + tipo + "')");
             JOptionPane.showMessageDialog(this, "Jogo cadastrado com sucesso");
+            }else{
+                executor.execute("UPDATE jogos SET nome = '" + nome + "', tipo = '"
+                + tipo + "' WHERE id = " + codigoEditar);
+                JOptionPane.showMessageDialog(this, "Jogo atualizado com sucesso");
+            }
+            
+            // UPDATE 
+            listarJogos();
+            // Quando salva ou edita o jogo, limpa o texto e a comboBox.
+            limparCampos();
+            
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Nao foi possivel realizar a operaçao");
         }
 
     }//GEN-LAST:event_jButtonSalvarActionPerformed
 
+    private void jButtonEditarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonEditarActionPerformed
+        try{
+        // Descobrir o codigo do registro que deseja alterar
+        DefaultTableModel modelo = (DefaultTableModel) jTableJogos.getModel();
+        int indiceLinhaSelecionada = jTableJogos.getSelectedRow();
+        
+        // Obter o codigo da coluna 0 que contem o codigo do jogo selecionado
+        codigoEditar = Integer.parseInt(modelo.getValueAt(
+                indiceLinhaSelecionada, 0).toString());
+        
+        // Abrir conexao com o banco de dados
+        var conexao = DriverManager.getConnection(
+                "jdbc:mysql://localhost/lojaBd", "root", "admin");
+        
+        // Executar comando para consultar os dados da tabela de jogos
+        var executor = conexao.createStatement();
+        executor.execute("SELECT nome, tipo FROM jogos WHERE id = " + codigoEditar);
+        
+        // Obter os dados da consulta
+        ResultSet registros = executor.getResultSet();
+        if(registros.next()){
+            var nome = registros.getString("nome");
+            var tipo = registros.getString("tipo");
+            jTextFieldNome.setText(nome);
+            jComboBoxTipo.setSelectedItem(tipo);
+        }else{
+            // Apresenta mensagem informando que nao encontrou nenhum registro
+            // com o Id escolhido.
+            JOptionPane.showMessageDialog(this, "Nao foi possivel encontrar o registro");
+        }
+        }catch (Exception e){
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Nao foi possivel blah blah blah");
+        }
+    }//GEN-LAST:event_jButtonEditarActionPerformed
+
+    private void jButtonApagarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonApagarActionPerformed
+        try{
+        // Descobrir o codigo do registro que dejesa apagar
+        DefaultTableModel modelo = (DefaultTableModel) jTableJogos.getModel();
+        int indiceLinhaSelecionada = jTableJogos.getSelectedRow();
+        
+        // Obter o codigo da coluna 0 que eh a coluna do codigo no JTable
+        int codigo = Integer.parseInt(modelo.getValueAt(indiceLinhaSelecionada,
+                0).toString());
+        // Conectar no banco de dados
+        var conexao = DriverManager.getConnection("jdbc:mysql://localhost/lojaBd",
+                 "root", "admin");
+        // Executar o comando para apagar o registro da tabela de jogos
+        var executor = conexao.createStatement();
+        executor.execute("DELETE FROM jogos WHERE id = " + codigo);
+        // Fechar a conexao do banco de dados
+        conexao.close();
+        // Listar os jogos
+        listarJogos();
+        // Apresentar feedback de que o registro foi apagado
+        JOptionPane.showMessageDialog(this, "Registro apagado com sucesso");
+        }catch(Exception e){
+            JOptionPane.showMessageDialog(this, "Nao foi possivel apagar");
+        }
+    }//GEN-LAST:event_jButtonApagarActionPerformed
+
+    private void limparCampos(){
+        jTextFieldNome.setText("");
+        jComboBoxTipo.setSelectedIndex(-1);
+        // Retorna para o modo de cadastro, o que permitira o usuario
+        // cadastrar novamente.
+        codigoEditar = -1;
+    }
+    
     private void listarJogos() {
         try {
             Connection conexao = DriverManager.getConnection(
@@ -230,3 +325,4 @@ public class JogoJFrame extends javax.swing.JFrame {
     private javax.swing.JTextField jTextFieldNome;
     // End of variables declaration//GEN-END:variables
 }
+// i like pizza :]
