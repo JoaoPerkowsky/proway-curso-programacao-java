@@ -3,6 +3,11 @@ package br.com.proway.exemplos.orientacao.objetos.banco.dados03;
 import java.sql.Statement;
 import java.util.ArrayList;
 
+// INSERT INTO nomeTabela (campos) VALUES (valores);
+// SELECT campos FROM nomeTabela WHERE (opcional)
+// UPDATE nomeTabela SET campo - valor WHERE id = valorId
+// DELETE FROM nomeTabela WHERE id = valorId
+
 public class JogoRepositorio implements JogoRepositorioInterface {
     // Alt + enter para criar todos os @overrides.
     
@@ -42,7 +47,28 @@ public class JogoRepositorio implements JogoRepositorioInterface {
 
     @Override
     public JogoDao obterPorId(int id) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        try{
+            var conexao = bancoDadosConexao.conectar();
+            var sql = "SELECT id, nome, tipo FROM jogos WHERE id = ?";
+            var preparador = conexao.prepareStatement(sql);
+            preparador.setInt(1, id);
+            preparador.execute();
+            var registros = preparador.getResultSet();
+            
+            // Verifica se encontrou algum registro
+            if(registros.next()){
+                var jogo = new JogoDao();
+                jogo.setId(Integer.parseInt(registros.getString("id")));
+                jogo.setNome(registros.getString("nome"));
+                jogo.setTipo(registros.getString("tipo"));
+                
+                return jogo;
+            }
+            // Nao encontrou nenhum registro
+            return null;
+        }catch(Exception e){
+            return null;
+        }
     }
 
     @Override
@@ -57,6 +83,7 @@ public class JogoRepositorio implements JogoRepositorioInterface {
         try{
             var executor = conexao.createStatement();
             var sql = "SELECT id, nome, tipo FROM jogos";
+            executor.execute(sql);
             // Obtem a lista de registros consultados da tabela de jogos.
             var registros = executor.getResultSet();
             // Percorre cada um dos registros.
@@ -76,12 +103,48 @@ public class JogoRepositorio implements JogoRepositorioInterface {
 
     @Override
     public boolean atualizar(JogoDao jogo) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        try{
+            var conexao = bancoDadosConexao.conectar();
+            var sql = "UPDATE jogos SET nome = ?, tipo = ? WHERE id = ?";
+            var preparador = conexao.prepareCall(sql);
+           preparador.setString(1, jogo.getNome());
+           preparador.setString(2, jogo.getTipo());
+           preparador.setInt(3, jogo.getId());
+
+           var quantidadeRegistrosAfetados = preparador.executeUpdate();
+           
+           var alterou = quantidadeRegistrosAfetados == 1;
+           return alterou;
+           
+        }catch(Exception e){
+            return false;
+        }
     }
 
     @Override
     public boolean apagar(int id) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        try{
+            var conexao = bancoDadosConexao.conectar();
+            var sql = "DELETE FROM jogos WHERE id = ?";
+            var preparador = conexao.prepareStatement(sql);
+            preparador.setInt(1, id);
+            var registrosAfetados = preparador.executeUpdate();
+            
+//            if(registrosAfetados == 1){
+//                return true;
+//            }else {
+//                return false;
+//            }
+//         ou
+//            var apagou = registrosAfetados == 1;
+//            return apagou;
+//         ou
+            return registrosAfetados == 1;
+
+            
+        }catch(Exception e){
+            return false;
+        }
     }
     
 }

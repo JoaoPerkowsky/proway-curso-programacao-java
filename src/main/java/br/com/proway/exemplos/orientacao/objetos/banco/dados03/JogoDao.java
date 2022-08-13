@@ -4,7 +4,8 @@ package br.com.proway.exemplos.orientacao.objetos.banco.dados03;
 public class JogoDao {
     private int id;
     private String nome;
-
+    private String tipo;
+    
     public int getId() {
         return id;
     }
@@ -25,5 +26,5 @@ public class JogoDao {
     public void setTipo(String tipo) {
         this.tipo = tipo;
     }
-    private String tipo;
+    
 }
